@@ -1,0 +1,24 @@
+- name: Создаём директория хранения файлов для конфига nginx
+  ansible.builtin.file:
+    path: /home/{{ deployer_user }}/config
+    state: directory
+    owner: "{{ deployer_user }}"
+    group: "{{ deployer_user }}"
+    mode: '0755'
+
+- name: Копируем compose файл для запуска
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: /home/{{ deployer_user }}/{{ item.dest }}
+    owner: "{{ deployer_user }}"
+    group: "{{ deployer_user }}"
+    mode: '0644'
+  loop:
+    - { src: 'compose.yml', dest: 'compose.yml' }
+    - { src: 'nginx.conf', dest: 'config/nginx.conf' }
+
+- name: Запускаем контейнер с помощью docker-compose
+  community.docker.docker_compose_v2:
+    project_src: /home/{{ deployer_user }}
+    state: present
+    pull: always

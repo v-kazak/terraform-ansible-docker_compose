@@ -1,0 +1,14 @@
+#SPDX-License-Identifier: MIT-0
+---
+
+docker_architecture: >-
+  {{ 'amd64' if ansible_facts['architecture'] == 'x86_64'
+  else ansible_facts['architecture'] }}
+docker_distro: "{{ ansible_facts['distribution'] | lower }}"
+docker_repo_base_url: "https://download.docker.com/linux/{{ docker_distro }}"
+docker_gpg_url: "{{ docker_repo_base_url }}/gpg"
+docker_repo_string: >-
+  deb [arch={{ docker_architecture }}
+  signed-by=/etc/apt/keyrings/docker.asc]
+  {{ docker_repo_base_url }}
+  {{ ansible_facts['distribution_release'] }} stable

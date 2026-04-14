@@ -1,0 +1,89 @@
+- name: Устанавливаем зависимости для Docker и sudo
+  ansible.builtin.apt:
+    name:
+      - sudo
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Создаем директорию для ключей apt
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Добавляем GPG ключ Docker
+  ansible.builtin.get_url:
+    url: "{{ docker_gpg_url }}"
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+
+- name: Добавляем репозиторий Docker
+  ansible.builtin.apt_repository:
+    repo: "{{ docker_repo_string }}"
+    state: present
+    filename: docker
+
+- name: Устанавливаем Docker Engine
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+      - python3-docker
+    state: present
+
+- name: Убедимся, что сервис Docker запущен и включен при загрузке
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+
+- name: Создаём пользователя {{ deployer_user }}
+  ansible.builtin.user:
+    name: "{{ deployer_user }}"
+    state: present
+    shell: /bin/bash
+    create_home: true
+    groups:
+      - sudo
+      - docker
+    append: true
+
+- name: Кладём публичный ключ в authorized_keys для пользователя deploy
+  ansible.posix.authorized_key:
+    user: "{{ deployer_user }}"
+    state: present
+    key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_ed25519.pub') }}"
+
+- name: Настраиваем беспарольный sudo для пользователя deploy
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/{{ deployer_user }}
+    content: '{{ deployer_user }} ALL=(ALL) NOPASSWD: ALL'
+    mode: '0440'
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: Запрещаем вход по паролю для всех пользователей
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    backup: true
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart ssh
+  
+- name: Проверяем версию Docker
+  ansible.builtin.command: docker --version
+  register: docker_version_check
+  changed_when: false
+
+- name: Показываем установленную версию Docker
+  ansible.builtin.debug:
+    var: docker_version_check.stdout

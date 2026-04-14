@@ -1,0 +1,16 @@
+- name: создаем директорию для web-приложения
+  ansible.builtin.file:
+    path: /home/{{ deployer_user }}/app 
+    state: directory
+    owner: "{{ deployer_user }}"
+    group: "{{ deployer_user }}"
+    mode: '0755'
+
+
+- name: копируем файлы для web-приложения
+  ansible.builtin.template:
+    src: templates/index.html.j2
+    dest: /home/{{ deployer_user }}/app/index.html
+    owner: "{{ deployer_user }}"
+    group: "{{ deployer_user }}"
+    mode: '0644'

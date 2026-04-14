@@ -1,0 +1,22 @@
+---
+- hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Устанавливаем Docker и настраиваем систему
+      ansible.builtin.import_role:
+        name: install_docker
+      become: true
+      tags: ["Docker"]
+
+    - name: Копируем файллы для web-приложения
+      ansible.builtin.import_role:
+        name: copy_files
+      tags: ["CopyFiles"]
+      become: true
+
+    - name: Запускаем web-приложение в Docker контейнере
+      ansible.builtin.import_role:
+        name: run_container
+      tags: ["RunContainer"]
+      become: true

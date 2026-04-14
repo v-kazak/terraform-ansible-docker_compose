@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест Балансировщика Yandex Cloud</title>
+    <style>
+        body {
+            /* Простая генерация случайного цвета на основе имени хоста */
+            --theme-color: hsl({{ inventory_hostname | length * 45 % 360 }}, 70%, 50%);
+            margin: 0; height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            font-family: sans-serif; background-color: #f4f7f6;
+        }
+        .card {
+            background: white; padding: 50px 80px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;
+            border-top: 10px solid var(--theme-color); 
+        }
+        .server-number {
+            font-size: 4rem; font-weight: 900; margin: 10px 0;
+            color: var(--theme-color); 
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Вы подключены к узлу:</h1>
+        <div class="server-number">{{ inventory_hostname }}</div>
+        <p>IP адрес сервера: {{ ansible_facts['default_ipv4']['address'] }}</p>
+    </div>
+</body>
+</html>
