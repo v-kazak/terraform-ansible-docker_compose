@@ -61,7 +61,7 @@ variable "disc_size" {
 variable "name" {
   type        = string
   description = "Имя виртуальной машины"
-  default     = "test"
+  default     = "web-server"
 }
 
 
