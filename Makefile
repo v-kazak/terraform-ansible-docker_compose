@@ -1,7 +1,11 @@
 .PHONY: start ansible terraform destroy
 start:
 	terraform -chdir=terraform init
+	terraform -chdir=terraform fmt
+	terraform -chdir=terraform validate
 	terraform -chdir=terraform apply
+
+
 	sleep 5
 	cd ansible && ansible-playbook playbook.yml
 

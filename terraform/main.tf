@@ -41,7 +41,7 @@ resource "yandex_compute_instance" "default" {
   }
 
   metadata = {
-    ssh-keys  = "debian:${file("~/.ssh/id_ed25519.pub")}"
+    ssh-keys = "debian:${file("~/.ssh/id_ed25519.pub")}"
   }
 
   scheduling_policy {
