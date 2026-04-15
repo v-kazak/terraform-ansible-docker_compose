@@ -1,4 +1,4 @@
-# Деплой веб приложения на Yandex Cloud с помощью Terraform, Ansible и Docker Compose
+# Деплой веб приложения в Yandex Cloud с помощью Terraform, Ansible и Docker Compose
 
 
 ## Описание
