@@ -28,7 +28,7 @@
 
 1.  **Клонируйте репозиторий**:
     ```bash
-    git clone https://github.com/your-username/terraform-ansible-docker_compose.git
+    git clone https://github.com/v-kazak/terraform-ansible-docker_compose.git
     cd terraform-ansible-docker_compose
     ```
 2.  **Учетные данные Yandex Cloud**:
