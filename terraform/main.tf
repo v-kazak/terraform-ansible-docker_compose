@@ -74,6 +74,11 @@ resource "yandex_lb_target_group" "my_blns" {
       address   = target.value.network_interface.0.ip_address
     }
   }
+
+    egress {
+    protocol       = "ANY"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 
