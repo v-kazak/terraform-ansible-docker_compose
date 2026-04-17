@@ -107,3 +107,23 @@ resource "local_file" "inventory" {
   content  = join("\n", [for instance in yandex_compute_instance.default : "${instance.network_interface[0].nat_ip_address} ansible_user=debian"])
   filename = "${path.module}/../ansible/inventory.ini"
 }
+
+resource "yandex_vpc_security_group" "sg1" {
+  name        = "my_security_group"
+  description = "description for my security group"
+  folder_id = var.folder_id
+  network_id  = resource.yandex_vpc_network.test.id
+
+  labels = {
+    my-label = "my-label-value"
+  }
+
+  dynamic "ingress" {
+    for_each = flatten(local.service_ports)
+    content {
+      protocol       = "TCP"
+      port           = ingress.value
+      v4_cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+}
