@@ -94,3 +94,15 @@ variable "blns_zone" {
   description = "Зона балансировщика"
   default     = "ru-central1"
 }
+
+variable "ssh_public_key_path" {
+  description = "Путь к публичному SSH ключу для доступа к ВМ"
+  type        = string
+  default     = "~/.ssh/id_ed25519.pub"
+}
+
+variable "ssh_user" {
+  description = "Имя root пользователя"
+  type        = string
+  default     = "superuser"
+}

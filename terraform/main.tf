@@ -36,12 +36,22 @@ resource "yandex_compute_instance" "default" {
   }
 
   network_interface {
-    subnet_id = yandex_vpc_subnet.test.id
-    nat       = var.nat
+    subnet_id          = yandex_vpc_subnet.test.id
+    nat                = var.nat
+    security_group_ids = [yandex_vpc_security_group.sg1.id]
   }
 
   metadata = {
-    ssh-keys = "debian:${file("~/.ssh/id_ed25519.pub")}"
+    user-data = <<-EOF
+      #cloud-config
+      users:
+        - name: ${var.ssh_user}
+          groups: sudo
+          shell: /bin/bash
+          sudo: ['ALL=(ALL) NOPASSWD:ALL']
+          ssh_authorized_keys:
+            - ${trimspace(file(var.ssh_public_key_path))}
+    EOF
   }
 
   scheduling_policy {
@@ -75,10 +85,6 @@ resource "yandex_lb_target_group" "my_blns" {
     }
   }
 
-    egress {
-    protocol       = "ANY"
-    v4_cidr_blocks = ["0.0.0.0/0"]
-  }
 }
 
 
@@ -109,14 +115,14 @@ resource "yandex_lb_network_load_balancer" "my_nlb" {
 
 
 resource "local_file" "inventory" {
-  content  = join("\n", [for instance in yandex_compute_instance.default : "${instance.network_interface[0].nat_ip_address} ansible_user=debian"])
+  content  = join("\n", [for instance in yandex_compute_instance.default : "${instance.network_interface[0].nat_ip_address} ansible_user=${var.ssh_user}"])
   filename = "${path.module}/../ansible/inventory.ini"
 }
 
 resource "yandex_vpc_security_group" "sg1" {
   name        = "my_security_group"
   description = "description for my security group"
-  folder_id = var.folder_id
+  folder_id   = var.folder_id
   network_id  = resource.yandex_vpc_network.test.id
 
   labels = {
@@ -130,5 +136,9 @@ resource "yandex_vpc_security_group" "sg1" {
       port           = ingress.value
       v4_cidr_blocks = ["0.0.0.0/0"]
     }
+  }
+  egress {
+    protocol       = "ANY"
+    v4_cidr_blocks = ["0.0.0.0/0"]
   }
 }
