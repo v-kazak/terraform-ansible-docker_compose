@@ -60,7 +60,7 @@
    preemptible   = true                   # Прерываемость ВМ (true = значительно дешевле)
 
    # --- Настройки доступа и сети ---
-   ssh_user            = "debian"                   # Пользователь для SSH-доступа
+   ssh_user            = "superuser"                   # Пользователь для SSH-доступа
    ssh_public_key_path = "~/.ssh/id_ed25519.pub"    # Путь к вашему публичному SSH-ключу
    nat                 = true                       # Назначать публичный IP-адрес каждой ВМ
    ```
@@ -97,7 +97,7 @@
 
 Чтобы снова получить IP-адрес балансировщика, выполните команду:
 ```bash
-terraform -chdir=terraform output load_balancer_public_ip
+terraform -chdir=terraform output -raw summary
 ```
 
 ## Очистка

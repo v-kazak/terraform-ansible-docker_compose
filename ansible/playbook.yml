@@ -1,8 +1,19 @@
 ---
 - hosts: all
-  gather_facts: true
+  # КРИТИЧНО: отключаем автоматический сбор фактов на старте, 
+  # иначе Ansible упадет до того, как сработает модуль ожидания
+  gather_facts: false
 
   tasks:
+
+    - name: Ожидание доступности SSH (таймаут 5 минут)
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        timeout: 300
+
+    - name: Собираем факты о системе
+      ansible.builtin.setup: #Отдельная таска, т.к  gather_facts: false (он выполняется самым первым, до таски сожиданием доступности)
+
     - name: Устанавливаем Docker и настраиваем систему
       ansible.builtin.import_role:
         name: install_docker
