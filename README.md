@@ -121,7 +121,8 @@ make destroy
 │       └── run_container/    # Развертывает приложение с помощью Docker Compose
 ├── terraform/                # Файлы конфигурации Terraform
 │   ├── main.tf               # Основное определение инфраструктуры
-│   ├── outputs.tf            # Выводы Terraform (например, IP-адрес балансировщика нагрузки)
+│   ├── outputs.tf            # Выводы Terraform 
+│   ├── monitoring.tf         # Параметры инфраструктур мониторинга
 |   ├── local.tf              # Локальные переменные        
 │   ├── terraform.tfvars      # Значения переменных по умолчанию (Опционально)
 │   └── variables.tf          # Определения переменных
