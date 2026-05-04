@@ -14,5 +14,6 @@ output "summary" {
   value       = <<-EOT
     🌐 Балансировщик: ${try(tolist(tolist(yandex_lb_network_load_balancer.my_nlb.listener)[0].external_address_spec)[0].address, "Не назначен")}
     🖥️  Серверы:       ${join(", ", [for instance in yandex_compute_instance.default : instance.network_interface[0].nat_ip_address])}
+    📊 Мониторинг:    ${yandex_compute_instance.monitoring.network_interface[0].nat_ip_address}
   EOT
 }
