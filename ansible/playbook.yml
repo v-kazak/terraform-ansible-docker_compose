@@ -5,13 +5,14 @@
   gather_facts: false
 
   tasks:
-    - name: Ожидание доступности SSH (таймаут 5 минут)
+
+    - name: Ожидание доступности SSH (таймаут до 5 минут)
       ansible.builtin.wait_for_connection:
         delay: 10
         timeout: 300
 
     - name: Собираем факты о системе
-      ansible.builtin.setup: #Отдельная таска, т.к  gather_facts: false (он выполняется самым первым, до таски сожиданием доступности)
+      ansible.builtin.setup: #Отдельная таска, т.к  gather_facts: false (он выполняется самым первым, до таски ожиданием доступности)
 
     - name: Устанавливаем Docker и настраиваем систему
       ansible.builtin.import_role:
@@ -19,16 +20,20 @@
       become: true
       tags: ["Docker"]
 
-    - name: Создаём пользователя для деплоя и мониторинга настраиваем SSH
+    - name: Создаём пользователя для деплоя и мониторинга, настраиваем SSH
       ansible.builtin.import_role:
         name: create_user
       become: true
       tags: ["CreateUser"]
 
+- hosts: web
+  gather_facts: false
+
+  tasks:
     - name: Копируем файллы для web-приложения
       ansible.builtin.import_role:
-        name: copy_files
-      tags: ["CopyFiles"]
+        name: copy_app_files
+      tags: ["CopyAppFiles"]
       become: true
 
     - name: Запускаем web-приложение в Docker контейнере
