@@ -1,5 +1,4 @@
-# Деплой веб приложения в Yandex Cloud с помощью Terraform, Ansible и Docker Compose
-
+# 1. Деплой веб приложения в Yandex Cloud с помощью Terraform, Ansible и Docker Compose
 
 ## Описание
 
@@ -111,23 +110,25 @@ make destroy
 
 ```
 .
-├── ansible/                  # Ansible-плейбуки, роли и инвентарь
-│   ├── ansible.cfg           # Конфигурация Ansible
-│   ├── inventory.ini         # Генерируется Terraform, содержит IP-адреса ВМ
-│   ├── playbook.yml          # Основной Ansible-плейбук
-│   └── roles/                # Роли Ansible
-│       ├── copy_files/       # Копирует файлы веб-приложения
-│       ├── install_docker/   # Устанавливает Docker и настраивает пользователя для развертывания
-│       └── run_container/    # Развертывает приложение с помощью Docker Compose
-├── terraform/                # Файлы конфигурации Terraform
-│   ├── main.tf               # Основное определение инфраструктуры
-│   ├── outputs.tf            # Выводы Terraform 
-│   ├── monitoring.tf         # Параметры инфраструктур мониторинга
-|   ├── local.tf              # Локальные переменные        
-│   ├── terraform.tfvars      # Значения переменных по умолчанию (Опционально)
-│   └── variables.tf          # Определения переменных
-├── .gitignore                # Указывает файлы, которые нужно игнорировать в Git
-└── Makefile                  # Скрипты автоматизации для развертывания и очистки
+├── ansible/                        # Ansible-плейбуки, роли и инвентарь
+│   ├── ansible.cfg                 # Конфигурация Ansible
+│   ├── inventory.ini               # Генерируется Terraform, содержит IP-адреса ВМ
+│   ├── playbook.yml                # Основной Ansible-плейбук
+│   └── roles/                      # Роли Ansible
+│       ├── copy_app_files/         # Копирует файлы веб-приложения
+│       ├── copy_monitoring_files   # Копирует файлы приложения для монитринга
+│       ├── create_user             # Создаёт пользователя для деплоя и мониторинга 
+│       ├── install_docker/         # Устанавливает Docker
+│       └── run_container_app/      # Развертывает приложение с помощью Docker Compose
+├── terraform/                      # Файлы конфигурации Terraform
+│   ├── main.tf                     # Основное определение инфраструктуры
+│   ├── outputs.tf                  # Выводы Terraform 
+│   ├── monitoring.tf               # Параметры инфраструктур мониторинга
+|   ├── local.tf                    # Локальные переменные        
+│   ├── terraform.tfvars            # Значения переменных по умолчанию (Опционально)
+│   └── variables.tf                # Определения переменных
+├── .gitignore                      # Указывает файлы, которые нужно игнорировать в Git
+└── Makefile                        # Скрипты автоматизации для развертывания и очистки
 ```
 
 ## Улучшения (Будущая работа)
