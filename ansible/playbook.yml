@@ -20,6 +20,12 @@
       become: true
       tags: ["Docker"]
 
+    - name: Создаём пользователя для деплоя и мониторинга настраиваем SSH
+      ansible.builtin.import_role:
+        name: create_user
+      become: true
+      tags: ["CreateUser"]
+
     - name: Копируем файллы для web-приложения
       ansible.builtin.import_role:
         name: copy_files
@@ -28,6 +34,6 @@
 
     - name: Запускаем web-приложение в Docker контейнере
       ansible.builtin.import_role:
-        name: run_container
+        name: run_container_app
       tags: ["RunContainer"]
       become: true

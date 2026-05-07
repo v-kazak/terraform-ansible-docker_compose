@@ -45,7 +45,6 @@
     state: started
     enabled: true
 
-
 - name: Создаём пользователя {{ deployer_user }}
   ansible.builtin.user:
     name: "{{ deployer_user }}"
