@@ -4,7 +4,7 @@ start:
 	terraform -chdir=terraform fmt
 	terraform -chdir=terraform validate
 	terraform -chdir=terraform apply
-	cd ansible && ansible-playbook playbook.yml
+	cd ansible && ansible-playbook -i inventory.ini playbook.yml
 	@echo "======================================="
 	@echo "РАЗВЕРТЫВАНИЕ ЗАВЕРШЕНО. АДРЕСА УЗЛОВ:"
 	@echo "======================================="
@@ -13,11 +13,12 @@ start:
 	@echo 
 
 ansible:
-	cd ansible && ansible-playbook playbook.yml
+	cd ansible && ansible-playbook -i inventory.ini playbook.yml
 
 	
 terraform:
 	terraform -chdir=terraform init
+	terraform -chdir=terraform validate
 	terraform -chdir=terraform apply
 
 destroy:

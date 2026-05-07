@@ -84,11 +84,6 @@ resource "yandex_compute_instance" "monitoring" {
   }
 }
 
-resource "local_file" "monitoring_inventory" {
-  content  = "${yandex_compute_instance.monitoring.network_interface[0].nat_ip_address} ansible_user=${var.ssh_user}"
-  filename = "${path.module}/../ansible/inventory_monitoring.ini"
-}
-
 output "monitoring_public_ip" {
   description = "Public IP address of monitoring instance"
   value       = yandex_compute_instance.monitoring.network_interface[0].nat_ip_address

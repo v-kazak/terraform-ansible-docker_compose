@@ -5,7 +5,6 @@
   gather_facts: false
 
   tasks:
-
     - name: Ожидание доступности SSH (таймаут 5 минут)
       ansible.builtin.wait_for_connection:
         delay: 10
