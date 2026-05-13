@@ -68,15 +68,15 @@ resource "yandex_compute_instance" "monitoring" {
 
   metadata = {
     user-data = <<-EOF
-			#cloud-config
-			users:
-				- name: ${var.ssh_user}
-					groups: sudo
-					shell: /bin/bash
-					sudo: ['ALL=(ALL) NOPASSWD:ALL']
-					ssh_authorized_keys:
-						- ${trimspace(file(var.ssh_public_key_path))}
-		EOF
+      #cloud-config
+      users:
+        - name: ${var.ssh_user}
+          groups: sudo
+          shell: /bin/bash
+          sudo: ['ALL=(ALL) NOPASSWD:ALL']
+          ssh_authorized_keys:
+            - ${trimspace(file(var.ssh_public_key_path))}
+    EOF
   }
 
   scheduling_policy {

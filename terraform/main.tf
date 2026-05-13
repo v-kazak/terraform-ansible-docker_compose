@@ -115,7 +115,7 @@ resource "yandex_lb_network_load_balancer" "my_nlb" {
 
 
 resource "local_file" "inventory" {
-  content = <<-EOT
+  content  = <<-EOT
   [web]  
   ${join("\n", [for instance in yandex_compute_instance.default : "${instance.network_interface[0].nat_ip_address} ansible_user=${var.ssh_user}"])}
 
