@@ -8,9 +8,13 @@
   loop:
     - "/home/{{ user_name }}/monitoring"
     - "/home/{{ user_name }}/monitoring/prometheus"
+    - "/home/{{ user_name }}/monitoring/grafana"
+    - "/home/{{ user_name }}/monitoring/grafana/provisioning"
+    - "/home/{{ user_name }}/monitoring/grafana/provisioning/datasources"
 
 
-- name: копируем файлы для мониторинга
+
+- name: копируем Template файлы для мониторинга
   ansible.builtin.template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -19,3 +23,13 @@
     mode: '0644'
   loop:
     - { src: 'prometheus.yml', dest: '/home/{{ user_name }}/monitoring/prometheus/prometheus.yml' }
+
+- name: копируем обычные файлы для мониторинга
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: '0644'
+  loop:
+    - { src: 'datasources.yml', dest: '/home/{{ user_name }}/monitoring/grafana/provisioning/datasources/datasources.yml' }
