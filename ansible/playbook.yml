@@ -43,6 +43,7 @@
       become: true
 
 
+
 - hosts: monitoring
   gather_facts: false
 
@@ -51,4 +52,10 @@
     ansible.builtin.import_role:
       name: copy_monitoring_files
     tags: ["CopyMonitoringFiles"]
+    become: true
+
+  - name: Запускаем контейнеры для мониторинга
+    ansible.builtin.import_role:
+      name: run_container_monitoring
+    tags: ["RunContainerMonitoring"]
     become: true
