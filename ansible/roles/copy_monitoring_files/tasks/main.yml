@@ -18,6 +18,4 @@
     group: "{{ user_name }}"
     mode: '0644'
   loop:
-    - { src: 'compose.yml', dest: '/home/{{ user_name }}/monitoring/compose.yml' }
-    - { src: '.env', dest: '/home/{{ user_name }}/monitoring/.env' }
     - { src: 'prometheus.yml', dest: '/home/{{ user_name }}/monitoring/prometheus/prometheus.yml' }
