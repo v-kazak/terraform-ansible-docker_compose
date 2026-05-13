@@ -6,10 +6,7 @@
     group: "{{ user_name }}"
     mode: '0755'
   loop:
-    - "/home/{{ user_name }}/monitoring"
     - "/home/{{ user_name }}/monitoring/prometheus"
-    - "/home/{{ user_name }}/monitoring/grafana"
-    - "/home/{{ user_name }}/monitoring/grafana/provisioning"
     - "/home/{{ user_name }}/monitoring/grafana/provisioning/datasources"
 
 
