@@ -1,16 +1,23 @@
 - name: создаем директорию для мониторинга
   ansible.builtin.file:
-    path: /home/{{ user_name }}/monitoring 
+    path: "{{ item }}"
     state: directory
     owner: "{{ user_name }}"
     group: "{{ user_name }}"
     mode: '0755'
+  loop:
+    - "/home/{{ user_name }}/monitoring"
+    - "/home/{{ user_name }}/monitoring/prometheus"
 
 
 - name: копируем файлы для мониторинга
   ansible.builtin.template:
-    src: templates/prometheus.yml
-    dest: /home/{{ user_name }}/monitoring/prometheus/prometheus.yml
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
     owner: "{{ user_name }}"
     group: "{{ user_name }}"
     mode: '0644'
+  loop:
+    - { src: 'compose.yml', dest: '/home/{{ user_name }}/monitoring/compose.yml' }
+    - { src: '.env', dest: '/home/{{ user_name }}/monitoring/.env' }
+    - { src: 'prometheus.yml', dest: '/home/{{ user_name }}/monitoring/prometheus/prometheus.yml' }

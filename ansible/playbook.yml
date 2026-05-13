@@ -41,3 +41,14 @@
         name: run_container_app
       tags: ["RunContainer"]
       become: true
+
+
+- hosts: monitoring
+  gather_facts: false
+
+  tasks:
+  - name: Копируем файлы для мониторинга
+    ansible.builtin.import_role:
+      name: copy_monitoring_files
+    tags: ["CopyMonitoringFiles"]
+    become: true
