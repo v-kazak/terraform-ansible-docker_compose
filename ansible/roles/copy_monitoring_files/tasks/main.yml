@@ -1,1 +1,16 @@
-#Будущие таски для установки мониторинга
+- name: создаем директорию для мониторинга
+  ansible.builtin.file:
+    path: /home/{{ user_name }}/monitoring 
+    state: directory
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: '0755'
+
+
+- name: копируем файлы для мониторинга
+  ansible.builtin.template:
+    src: templates/prometheus.yml
+    dest: /home/{{ user_name }}/monitoring/prometheus/prometheus.yml
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: '0644'
