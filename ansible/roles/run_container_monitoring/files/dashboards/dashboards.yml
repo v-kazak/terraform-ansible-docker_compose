@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: 'Local Dashboards'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      # Указываем Grafana искать JSON-файлы прямо в этой же папке внутри контейнера
+      path: /etc/grafana/provisioning/dashboards

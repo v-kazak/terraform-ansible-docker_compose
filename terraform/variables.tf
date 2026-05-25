@@ -25,25 +25,25 @@ variable "zone" {
 variable "vps_count" {
   type        = number
   description = "Количество виртуальных машин"
-  default     = "2"
+  default     = 2
 }
 
 variable "cores_count" {
   type        = number
   description = "Количество ядер"
-  default     = "2"
+  default     = 2
 }
 
 variable "memory_count" {
   type        = number
   description = "Количество ОЗУ в гигабайтах"
-  default     = "2"
+  default     = 2
 }
 
 variable "core_fraction" {
   type        = number
   description = "% от общей мощности ядра"
-  default     = "20"
+  default     = 20
 }
 
 variable "disc_type" {
@@ -55,7 +55,7 @@ variable "disc_type" {
 variable "disc_size" {
   type        = number
   description = "Объем диска в гигабайтах"
-  default     = "15"
+  default     = 15
 }
 
 variable "name" {
@@ -73,7 +73,7 @@ variable "platform_type" {
 
 variable "nat" {
   type        = bool
-  description = "Пробромить за NAT и получить внешний IP"
+  description = "Пробросить за NAT и получить внешний IP"
   default     = true
 }
 
