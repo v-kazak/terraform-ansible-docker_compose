@@ -115,14 +115,14 @@ resource "yandex_lb_network_load_balancer" "my_nlb" {
 
 
 resource "local_file" "inventory" {
-  content  = <<-EOT
-  [web]  
-  ${join("\n", [for instance in yandex_compute_instance.default : "${instance.network_interface[0].nat_ip_address} ansible_user=${var.ssh_user}"])}
-
-  [monitoring] 
-  ${yandex_compute_instance.monitoring.network_interface[0].nat_ip_address} ansible_user=${var.ssh_user}
-  EOT
   filename = "${path.module}/../ansible/inventory.ini"
+  content  = <<-EOT
+  [web]
+  ${join("\n", [for i, instance in yandex_compute_instance.default : "web-${i} ansible_host=${instance.network_interface[0].nat_ip_address} internal_ip=${instance.network_interface[0].ip_address} ansible_user=${var.ssh_user}"])}
+
+  [monitoring]
+  monitoring-server ansible_host=${yandex_compute_instance.monitoring.network_interface[0].nat_ip_address} internal_ip=${yandex_compute_instance.monitoring.network_interface[0].ip_address} ansible_user=${var.ssh_user}
+  EOT
 }
 
 resource "yandex_vpc_security_group" "sg1" {
@@ -142,6 +142,12 @@ resource "yandex_vpc_security_group" "sg1" {
       port           = ingress.value
       v4_cidr_blocks = ["0.0.0.0/0"]
     }
+  }
+  ingress {
+    protocol       = "TCP"
+    description    = "Allow Prometheus scraping from internal network"
+    port           = 9100
+    v4_cidr_blocks = ["10.10.0.0/24"]
   }
   egress {
     protocol       = "ANY"
