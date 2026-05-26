@@ -1,29 +1,10 @@
 - name: убеждаемся, что директрия существует
   ansible.builtin.file:
-    path: "/home/{{ user_name }}/monitoring/grafana/provisioning"
+    path: "/home/{{ user_name }}/monitoring/"
     state: directory
     owner: "{{ user_name }}"
     group: "{{ user_name }}"
     mode: '0755'
-
-- name: создаём директорию под дашборд
-  ansible.builtin.file:
-    path: "/home/{{ user_name }}/monitoring/grafana/provisioning/dashboards"
-    state: directory
-    owner: "{{ user_name }}"
-    group: "{{ user_name }}"
-    mode: '0755'
-
-- name: копируем файлы для мониторинга
-  ansible.builtin.copy:
-    src: "dashboards/{{ item }}"
-    dest: "/home/{{ user_name }}/monitoring/grafana/provisioning/dashboards/{{ item }}"
-    owner: "{{ user_name }}"
-    group: "{{ user_name }}"
-    mode: '0755'
-  loop:
-    - "node_exporter.json"
-    - "dashboards.yml"
 
 
 - name: копируем файлы для мониторинга

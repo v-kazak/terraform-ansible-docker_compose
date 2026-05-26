@@ -7,8 +7,7 @@
     mode: '0755'
   loop:
     - "/home/{{ user_name }}/monitoring/prometheus"
-    - "/home/{{ user_name }}/monitoring/grafana/provisioning/datasources"
-
+    - "/home/{{ user_name }}/monitoring/grafana/provisioning/dashboards/"
 
 
 - name: копируем Template файлы для мониторинга
@@ -19,7 +18,9 @@
     group: "{{ user_name }}"
     mode: '0644'
   loop:
-    - { src: 'prometheus.yml', dest: '/home/{{ user_name }}/monitoring/prometheus/prometheus.yml' }
+    - { src: 'prometheus.yml.j2', dest: '/home/{{ user_name }}/monitoring/prometheus/prometheus.yml' }
+
+
 
 - name: копируем обычные файлы для мониторинга
   ansible.builtin.copy:
@@ -30,3 +31,5 @@
     mode: '0644'
   loop:
     - { src: 'datasources.yml', dest: '/home/{{ user_name }}/monitoring/grafana/provisioning/datasources/datasources.yml' }
+    - { src: 'dashboards/node_exporter.json', dest: '/home/{{ user_name }}/monitoring/grafana/provisioning/dashboards/node_exporter.json' }
+    - { src: 'dashboards/dashboards.yml', dest: '/home/{{ user_name }}/monitoring/grafana/provisioning/dashboards/dashboards.yml' }

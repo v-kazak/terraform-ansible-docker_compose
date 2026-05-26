@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: 'Local Dashboards' # Название провайдера, может быть любым
+    type: file # Тип провайдера, указываем, что это файловый провайдер
+    disableDeletion: false # Разрешаем удаление дашбордов через Grafana
+    editable: true # Разрешаем редактирование дашбордов через Grafana
+    options:
+      # Указываем Grafana искать JSON-файлы прямо в этой же папке внутри контейнера
+      path: /etc/grafana/provisioning/dashboards
