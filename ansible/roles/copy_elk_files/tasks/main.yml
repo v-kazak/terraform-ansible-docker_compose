@@ -1,0 +1,39 @@
+- name: создаем директорию для elk-стека
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: '0755'
+  loop:
+    - "/home/{{ user_name }}/elk/configs/elasticsearch/"
+    - "/home/{{ user_name }}/elk/configs/kibana/"
+    - "/home/{{ user_name }}/elk/configs/logstash/"
+
+
+- name: копируем templates для elk-стека
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: '0644'
+  loop:
+    - { src: 'config.yml.j2', dest: '/home/{{ user_name }}/elk/configs/kibana/config.yml' }
+
+
+- name: копируем  файлы для elk-стека
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: '0644'
+  loop:
+    - { src: configs/elasticsearch/config.yml, dest: '/home/{{ user_name }}/elk/configs/elasticsearch/config.yml' }
+    - { src: configs/logstash/config.yml, dest: '/home/{{ user_name }}/elk/configs/logstash/config.yml' }
+    - { src: configs/logstash/pipeline.conf, dest: '/home/{{ user_name }}/elk/configs/logstash/pipeline.conf' }
+
+
+
+    

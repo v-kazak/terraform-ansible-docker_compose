@@ -1,0 +1,12 @@
+server.name: kibana
+server.host: 0.0.0.0
+server.publicBaseUrl: "http://{{ internal_ip }}:5601"
+monitoring.ui.container.elasticsearch.enabled: true # Для корректного сбора метрик с elastic search, запущенного в контейнере
+
+elasticsearch.hosts: [ "http://elasticsearch:9200" ]
+elasticsearch.serviceAccountToken: "${KIBANA_SERVICE_ACCOUNT_TOKEN}"
+
+# Ключи для шифрования чувствительных данных (Алерты, Интеграции, Отчеты)
+xpack.encryptedSavedObjects.encryptionKey: "${KIBANA_ENCRYPTION_KEY}"
+xpack.reporting.encryptionKey: "${KIBANA_REPORTING_ENCRYPTION_KEY}"
+xpack.security.encryptionKey: "${KIBANA_SECURITY_ENCRYPTION_KEY}"

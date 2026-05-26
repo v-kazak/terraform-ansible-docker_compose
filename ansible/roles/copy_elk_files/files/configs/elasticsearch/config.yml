@@ -1,0 +1,7 @@
+cluster.name: "elk"
+network.host: 0.0.0.0 # Для корректной работы внутри контейнера
+
+xpack.security.enabled: true # Для поддержки функционала, обеспечивающего безопасность кластера
+xpack.license.self_generated.type: basic # Типа лицензии "basic" для наших нужд хватит с головой
+
+indices.breaker.total.use_real_memory: true #заставляет Elastic оценивать реальный объем свободной памяти перед выполнением тяжелого запроса

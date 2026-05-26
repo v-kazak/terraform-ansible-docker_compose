@@ -18,6 +18,12 @@ resource "yandex_vpc_security_group" "monitoring_sg" {
 
   ingress {
     protocol       = "TCP"
+    port           = 5601
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol       = "TCP"
     port           = 9090
     v4_cidr_blocks = ["10.10.0.0/24"]
   }
@@ -41,14 +47,15 @@ resource "yandex_vpc_security_group" "monitoring_sg" {
 }
 
 resource "yandex_compute_instance" "monitoring" {
-  name        = "monitoring-server"
-  platform_id = var.platform_type
-  zone        = var.zone
-  folder_id   = var.folder_id
+  name                      = "monitoring-server"
+  platform_id               = var.platform_type
+  zone                      = var.zone
+  folder_id                 = var.folder_id
+  allow_stopping_for_update = true
 
   resources {
     cores         = 2
-    memory        = 4
+    memory        = 6
     core_fraction = 20
   }
 

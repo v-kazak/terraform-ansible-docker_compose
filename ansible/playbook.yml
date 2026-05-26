@@ -59,3 +59,15 @@
       name: run_container_monitoring
     tags: ["RunContainerMonitoring"]
     become: true
+
+  - name: Копируем файлы для elk-стека
+    ansible.builtin.import_role:
+      name: copy_elk_files
+    tags: ["CopyElkFiles"]
+    become: true
+  
+  - name: Запускаем контейнеры для elk-стека
+    ansible.builtin.import_role:
+      name: run_container_elk
+    tags: ["RunContainerElk"]
+    become: true

@@ -1,0 +1,63 @@
+services:
+  elasticsearch:
+    container_name: elasticsearch
+    restart: unless-stopped
+    image: elasticsearch:9.4.1
+    volumes:
+      - ./configs/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+      ELASTIC_USERNAME: "${USERNAME}"
+      ELASTIC_PASSWORD: "${PASSWORD}"
+      discovery.type: single-node
+    networks:
+      - elk
+    
+    
+  logstash:
+    image: logstash:9.4.1
+    container_name: logstash
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      LS_JAVA_OPTS: "-Xmx1024m -Xms1024m"
+      USERNAME: "${USERNAME}"
+      PASSWORD: "${PASSWORD}"
+      ELASTIC_USERNAME: "${USERNAME}"
+      ELASTIC_PASSWORD: "${PASSWORD}"
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk
+
+  kibana:
+    container_name: kibana
+    restart: unless-stopped
+    image: kibana:9.4.1
+    environment:
+      I18N_LOCALE: "ru-RU"
+      KIBANA_SERVICE_ACCOUNT_TOKEN: "${KIBANA_SERVICE_ACCOUNT_TOKEN}"
+      KIBANA_ENCRYPTION_KEY: "${KIBANA_ENCRYPTION_KEY}"
+      KIBANA_REPORTING_ENCRYPTION_KEY: "${KIBANA_REPORTING_ENCRYPTION_KEY}"
+      KIBANA_SECURITY_ENCRYPTION_KEY: "${KIBANA_SECURITY_ENCRYPTION_KEY}"
+    volumes:
+      - ./configs/kibana/config.yml:/usr/share/kibana/config/kibana.yml:ro
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk
+    ports:
+    - "5601:5601"
+
+volumes:
+  elasticsearch_data:
+
+networks:
+  elk:
+    driver: bridge
