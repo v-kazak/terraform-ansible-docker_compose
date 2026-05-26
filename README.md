@@ -1,140 +1,260 @@
-# Деплой веб приложения в Yandex Cloud с помощью Terraform, Ansible и Docker Compose
+# Terraform + Ansible + Docker для Yandex Cloud
 
-## Описание
+Проект разворачивает в Yandex Cloud готовый стенд из нескольких web-нод и отдельного monitoring-хоста. Terraform поднимает инфраструктуру и генерирует Ansible inventory, Ansible настраивает серверы и устанавливает Docker, а затем запускает контейнеры приложения и мониторинга через Docker Compose v2.
 
-Этот проект демонстрирует автоматизированное развертывание веб-приложения в Yandex Cloud с использованием Terraform для управления инфраструктурой, Ansible для настройки серверов и установки программного обеспечения, а также Docker Compose для оркестрации контейнеров приложения.
+После деплоя вы получаете:
 
-## Особенности
+- сетевую инфраструктуру в Yandex Cloud: VPC, подсеть и security groups;
+- группу web-серверов за `Network Load Balancer`;
+- отдельный `monitoring-server`;
+- тестовое web-приложение на `nginx`, которое показывает имя ноды, обработавшей запрос;
+- `node-exporter` на web-нодах и на monitoring-хосте;
+- `Prometheus` и `Grafana` на отдельном monitoring-хосте;
+- автоматически сгенерированный `ansible/inventory.ini`.
 
-*   **Инфраструктура как код (IaC)**: Terraform используется для создания и управления ресурсами Yandex Cloud, включая виртуальные машины, VPC-сеть, подсеть и сетевой балансировщик нагрузки.
-*   **Управление конфигурацией**: Ansible настраивает подготовленные ВМ, устанавливает Docker и Docker Compose, а также создает выделенного пользователя для развертывания.
-*   **Контейнеризированное приложение**: Веб-приложение развертывается с помощью Docker Compose, что обеспечивает переносимость и простоту управления.
-*   **Балансировка нагрузки**: Настроен сетевой балансировщик нагрузки Yandex Cloud для распределения трафика между несколькими экземплярами приложения.
-*   **Безопасный доступ**: Настроена аутентификация по SSH-ключам для пользователя развертывания и отключена аутентификация по паролю.
-*   **Базовый уровень безопасности**: на web-нодах открыты порты 22, 80, 443, остальное закрыто с помщью `security group`
+## Архитектура
 
-## Предварительные требования
+```text
+Интернет
+   |
+   v
+Yandex Network Load Balancer :80
+   |
+   +--> web-0 (nginx + node-exporter)
+   +--> web-1 (nginx + node-exporter)
+   +--> ...
 
-Для запуска этого проекта вам потребуется:
+monitoring-server
+   +--> Prometheus
+   +--> Grafana
+   +--> node-exporter
+```
 
-*   **OC** Debian или Ubuntu
-*   **Аккаунт Yandex Cloud**: Активный аккаунт Yandex Cloud с включенным биллингом.
-*   **`yc` CLI**: Установленный и настроенный Yandex Cloud CLI (для получения токена аутентификации).
-*   **Terraform**: Установленная версия 0.13 или выше.
-*   **Ansible**: Установленный Ansible.
-*   **SSH-ключ**: Пара SSH-ключей (например, `~/.ssh/id_ed25519.pub` и `~/.ssh/id_ed25519`), настроенная на вашей локальной машине.
+Что происходит при развертывании:
+
+1. Terraform создаёт `vps_count` web-нод, отдельную monitoring-ВМ, сеть, подсеть и балансировщик.
+2. Terraform формирует `ansible/inventory.ini` с внешними и внутренними IP-адресами.
+3. Ansible ждёт доступности SSH, устанавливает Docker Engine и `docker compose` plugin.
+4. Ansible создаёт пользователей `deploy` и `monitoring`, добавляет SSH-ключ и отключает вход по паролю.
+5. На web-нодах запускаются `nginx` и `node-exporter`.
+6. На monitoring-хосте запускаются `Prometheus`, `Grafana` и `node-exporter`.
+7. `Prometheus` собирает метрики с monitoring-хоста и всех web-нод по внутренним адресам.
+
+## Что создаёт проект
+
+### Terraform
+
+- `terraform/main.tf`
+  Создаёт web-ВМ, VPC, подсеть, target group, балансировщик и Ansible inventory.
+- `terraform/monitoring.tf`
+  Создаёт отдельную monitoring-ВМ и security group для неё.
+- `terraform/local.tf`
+  Описывает набор публично доступных портов для web-нод.
+- `terraform/outputs.tf`
+  Возвращает IP балансировщика, IP web-нод и текстовую сводку после деплоя.
+
+### Ansible
+
+- `ansible/playbook.yml`
+  Общий сценарий подготовки всех хостов и раздельного деплоя web и monitoring ролей.
+- `ansible/roles/install_docker`
+  Устанавливает Docker Engine, Compose plugin и зависимости.
+- `ansible/roles/create_user`
+  Создаёт системных пользователей, настраивает `authorized_keys` и отключает `PasswordAuthentication`.
+- `ansible/roles/copy_app_files` и `ansible/roles/run_container_app`
+  Кладут шаблон страницы, `nginx.conf`, `compose.yml` и запускают web-стек.
+- `ansible/roles/copy_monitoring_files` и `ansible/roles/run_container_monitoring`
+  Подготавливают конфиги Prometheus/Grafana и запускают monitoring-стек.
+
+## Требования
+
+- аккаунт Yandex Cloud с доступом к `cloud_id` и `folder_id`;
+- Terraform `>= 0.13`;
+- Ansible;
+- `make`;
+- SSH-ключ, доступный локально, по умолчанию `~/.ssh/id_ed25519` и `~/.ssh/id_ed25519.pub`;
+- Ansible collections:
+
+```bash
+ansible-galaxy collection install community.docker ansible.posix
+```
+
+`yc` CLI не обязателен для работы проекта, но удобен для получения OAuth-токена.
 
 ## Настройка
 
-1.  **Клонируйте репозиторий**:
-    ```bash
-    git clone https://github.com/v-kazak/terraform-ansible-docker_compose.git
-    cd terraform-ansible-docker_compose
-    ```
-2.  **Учетные данные Yandex Cloud**:
-    *   Получите OAuth-токен, Cloud ID и Folder ID из вашего аккаунта Yandex Cloud.
-    *   **Рекомендуется**: Создайте файл `secret.auto.tfvars` в директории `terraform/` (этот файл игнорируется `.gitignore`) и добавьте в него ваши чувствительные переменные:
-        ```
-        token    = "ваш_oauth_токен"
-        cloud_id = "ваш_cloud_id"
-        folder_id = "ваш_folder_id"
-        ```
-    *   В качестве альтернативы вы можете установить эти значения как переменные окружения (например, `YC_TOKEN`, `YC_CLOUD_ID`, `YC_FOLDER_ID`) или передать их напрямую через командную строку.
-3.  **SSH-ключ**: Убедитесь, что ваш публичный SSH-ключ находится по адресу `~/.ssh/id_ed25519.pub`, или обновите метаданные `ssh-keys` в `terraform/variables.tf`, чтобы указать правильный путь.
-4. (Опционально) Ниже приведены настройки по-умолчанию, для их изменения создайте файл `terraform.tfvars` в директории `terraform/` и укажите в нем необходимые параметры, например `vps_count = 4`
-   
-   ```hcl
-   # --- Настройки виртуальных машин ---
-   vps_count     = 2                      # Количество создаваемых серверов
-   name          = "web-server"           # Префикс имени сервера (web-server-0, web-server-1, ...)
-   zone          = "ru-central1-d"        # Зона доступности
-   blns_zone     = "ru-central1"          # Зона для балансировщика
-   platform_type = "standard-v3"          # Тип платформы сервера
-   cores_count   = 2                      # Количество vCPU
-   memory_count  = 2                      # Объем RAM в ГБ
-   core_fraction = 20                     # Гарантированная доля vCPU в %
-   disc_size     = 15                     # Размер диска в ГБ
-   disc_type     = "network-hdd"          # Тип накопителя
-   image_id      = "fd8e9t6fpgi13oh7q39f" # ID образа ОС (Debian 12)  
-   preemptible   = true                   # Прерываемость ВМ (true = значительно дешевле)
+### 1. Секреты Terraform
 
-   # --- Настройки доступа и сети ---
-   ssh_user            = "superuser"                   # Пользователь для SSH-доступа
-   ssh_public_key_path = "~/.ssh/id_ed25519.pub"    # Путь к вашему публичному SSH-ключу
-   nat                 = true                       # Назначать публичный IP-адрес каждой ВМ
-   ```
-## Развертывание
+Создайте файл `terraform/secret.auto.tfvars`:
 
-`Makefile` предоставляет удобные команды для управления развертыванием.
+```hcl
+token     = "your_yandex_oauth_token"
+cloud_id  = "your_cloud_id"
+folder_id = "your_folder_id"
+```
 
-*   **Полное развертывание (Terraform + Ansible)**:
-    ```bash
-    make start
-    ```
-    Эта команда выполнит:
-    1.  Инициализацию Terraform.
-    2.  Применение конфигурации Terraform для подготовки инфраструктуры.
-    3.  Генерация inventory.ini с необходимыми параметрами
-    4.  Запуск Ansible-плейбука для настройки ВМ и развертывания приложения.
+### 2. Переопределение переменных инфраструктуры
 
-*   **Только развертывание Terraform**:
-    ```bash
-    make terraform
-    ```
-    Это только подготовит инфраструктуру с помощью Terraform.
+При необходимости создайте `terraform/terraform.tfvars` и измените параметры стенда:
 
-*   **Только развертывание Ansible** P.S Укажите актульные IP адреса в `inventory.ini`:
+```hcl
+vps_count     = 2
+name          = "web-server"
+zone          = "ru-central1-d"
+blns_zone     = "ru-central1"
+platform_type = "standard-v3"
+cores_count   = 2
+memory_count  = 2
+core_fraction = 20
+disc_size     = 15
+disc_type     = "network-hdd"
+image_id      = "fd8e9t6fpgi13oh7q39f"
+preemptible   = true
 
-    ```bash
-    make ansible
-    ```
-    Это только запустит Ansible-плейбук на уже подготовленной инфраструктуре. Убедитесь, что `terraform apply` был успешно выполнен перед запуском этой команды.
+ssh_user            = "superuser"
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+nat                 = true
+```
 
-## Доступ к приложению
+По умолчанию:
 
-После успешного выполнения `make start` публичный IP-адрес сетевого балансировщика нагрузки будет отображен в выводе Terraform. Вы можете получить доступ к вашему веб-приложению, перейдя по этому IP-адресу в вашем веб-браузере.
+- web-ноды создаются в количестве `2`;
+- все ВМ прерываемые (`preemptible = true`);
+- для web-нод открыты `22`, `80`, `443`;
+- порт `9100` у web-нод доступен только из внутренней сети;
+- у monitoring-хоста публично доступны `22` и `3000`.
 
-Чтобы снова получить IP-адрес балансировщика, выполните команду:
+### 3. Настройка Grafana
+
+Файл `ansible/roles/run_container_monitoring/files/.env` содержит переменные для Grafana:
+
+```env
+SERVER_DOMAIN=http://localhost:3000
+SERVER_ROOT_URL=http://localhost:3000
+GRAFANA_PASSWORD=admin
+```
+
+Для демонстрации этого достаточно, но для реального использования лучше заранее поменять пароль администратора. Если хотите, чтобы Grafana использовала корректный внешний URL, обновите `SERVER_ROOT_URL` и затем повторно выполните `make ansible`.
+
+## Запуск
+
+### Полное развертывание
+
+```bash
+make start
+```
+
+Команда выполняет:
+
+1. `terraform init`
+2. `terraform fmt`
+3. `terraform validate`
+4. `terraform apply`
+5. запуск `ansible-playbook`
+6. вывод итоговой сводки с адресами
+
+### Только инфраструктура
+
+```bash
+make terraform
+```
+
+### Повторный прогон конфигурации Ansible
+
+```bash
+make ansible
+```
+
+Полезно, если:
+
+- вы поменяли шаблоны или compose-файлы;
+- вы изменили настройки Grafana в `.env`;
+- инфраструктура уже создана, и нужно только заново применить конфигурацию.
+
+## Доступ после деплоя
+
+### Web-приложение
+
+Откройте адрес балансировщика:
+
+```bash
+terraform -chdir=terraform output -raw load_balancer_public_ip
+```
+
+или краткую сводку:
+
 ```bash
 terraform -chdir=terraform output -raw summary
 ```
 
-## Очистка
+Страница покажет имя узла, который ответил на запрос. Это удобно для проверки балансировки.
 
-Чтобы уничтожить все подготовленные ресурсы Yandex Cloud:
+### Grafana
+
+Получите IP monitoring-хоста:
+
+```bash
+terraform -chdir=terraform output -raw monitoring_public_ip
+```
+
+Далее откройте:
+
+```text
+http://<monitoring_public_ip>:3000
+```
+
+Логин:
+
+- `admin`
+
+Пароль:
+
+- значение `GRAFANA_PASSWORD` из `ansible/roles/run_container_monitoring/files/.env`
+
+### Prometheus
+
+В текущей конфигурации Prometheus не публикуется наружу. Он работает внутри monitoring-стека и используется как источник данных для Grafana.
+
+## Удаление инфраструктуры
+
 ```bash
 make destroy
 ```
 
+Команда удаляет ресурсы, созданные Terraform в Yandex Cloud.
+
 ## Структура проекта
 
-```
+```text
 .
-├── ansible/                        # Ansible-плейбуки, роли и инвентарь
-│   ├── ansible.cfg                 # Конфигурация Ansible
-│   ├── inventory.ini               # Генерируется Terraform, содержит IP-адреса ВМ
-│   ├── playbook.yml                # Основной Ansible-плейбук
-│   └── roles/                      # Роли Ansible
-│       ├── copy_app_files/         # Копирует файлы веб-приложения
-│       ├── copy_monitoring_files   # Копирует файлы приложения для монитринга
-│       ├── create_user             # Создаёт пользователя для деплоя и мониторинга 
-│       ├── install_docker/         # Устанавливает Docker
-│       └── run_container_app/      # Развертывает приложение с помощью Docker Compose
-├── terraform/                      # Файлы конфигурации Terraform
-│   ├── main.tf                     # Основное определение инфраструктуры
-│   ├── outputs.tf                  # Выводы Terraform 
-│   ├── monitoring.tf               # Параметры инфраструктур мониторинга
-|   ├── local.tf                    # Локальные переменные        
-│   ├── terraform.tfvars            # Значения переменных по умолчанию (Опционально)
-│   └── variables.tf                # Определения переменных
-├── .gitignore                      # Указывает файлы, которые нужно игнорировать в Git
-└── Makefile                        # Скрипты автоматизации для развертывания и очистки
+├── Makefile
+├── README.md
+├── terraform
+│   ├── local.tf
+│   ├── main.tf
+│   ├── monitoring.tf
+│   ├── outputs.tf
+│   └── variables.tf
+└── ansible
+    ├── ansible.cfg
+    ├── group_vars
+    │   ├── all.yml
+    │   ├── monitoring.yaml
+    │   └── web.yml
+    ├── inventory.ini
+    ├── playbook.yml
+    └── roles
+        ├── copy_app_files
+        ├── copy_monitoring_files
+        ├── create_user
+        ├── install_docker
+        ├── run_container_app
+        └── run_container_monitoring
 ```
 
-## Улучшения (Будущая работа)
+## Текущие ограничения
 
-*   **✅ Повторный вывод IP адреса балансировщика и созданных машин после завершения развертывания**:
-*   **🛠️ Мониторинг и логирование**: Интеграция с сервисами Grafana + Prometheus + loki
-*   **⏳ Управление секретами**: Использование выделенного менеджера секретов (HashiCorp Vault) для конфиденциальных данных вместо `secret.auto.tfvars`.
-*   **⏳ Оркестрация** Заменить Docker compose на k8s
-*   **⏳ Интеграция CI/CD**: Автоматизация развертывания с использованием GitLab CI/CD
+- проект ориентирован на демонстрационный стенд и не настраивает HTTPS;
+- пароль Grafana хранится в репозитории в `.env`, поэтому для production нужен другой способ управления секретами;
+- `make start` использует обычный `terraform apply`, то есть потребует ручного подтверждения;
+- логирование и alerting пока не выделены в отдельный стек.
