@@ -1,0 +1,22 @@
+filebeat.inputs:
+  # 1. Читаем логи Docker-контейнеров из системного журнала
+  - type: journald
+    id: docker-logs
+    # Фильтруем только логи, связанные с контейнерами (по имени контейнера)
+    include_matches:
+      - CONTAINER_NAME=.*
+
+  # 2. Читаем классические системные логи (auth.log, syslog) с диска
+  - type: filestream
+    id: host-syslog
+    paths:
+      - /var/log/syslog
+      - /var/log/auth.log
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  username: "${ELASTIC_USERNAME}"
+  password: "${ELASTIC_PASSWORD}"
+
+setup.kibana:
+  host: "http://kibana:5601"

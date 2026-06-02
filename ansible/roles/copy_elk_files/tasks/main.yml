@@ -9,6 +9,7 @@
     - "/home/{{ user_name }}/elk/configs/elasticsearch/"
     - "/home/{{ user_name }}/elk/configs/kibana/"
     - "/home/{{ user_name }}/elk/configs/logstash/"
+    - "/home/{{ user_name }}/elk/configs/filebeat/"
 
 
 - name: копируем templates для elk-стека
@@ -33,6 +34,7 @@
     - { src: configs/elasticsearch/config.yml, dest: '/home/{{ user_name }}/elk/configs/elasticsearch/config.yml' }
     - { src: configs/logstash/config.yml, dest: '/home/{{ user_name }}/elk/configs/logstash/config.yml' }
     - { src: configs/logstash/pipeline.conf, dest: '/home/{{ user_name }}/elk/configs/logstash/pipeline.conf' }
+    - { src: configs/filebeat/filebeat.yml, dest: '/home/{{ user_name }}/elk/configs/filebeat/filebeat.yml' }
 
 
 
