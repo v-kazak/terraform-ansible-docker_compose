@@ -44,7 +44,7 @@
 
 - name: Извлекаем сгенерированный токен из вывода
   set_fact:
-    kibana_generated_token: "{{ token_generation_output.stdout | regex_search('AAEAA[^\\s]+') }}"
+    kibana_generated_token: "{{ token_generation_output.stdout | regex_search('AAEAA[A-Za-z0-9_\\-]+') }}"
 
 - name: Выводим информацию о сгенерированном токене
   debug:
