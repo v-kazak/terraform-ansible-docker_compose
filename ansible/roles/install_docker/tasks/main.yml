@@ -45,6 +45,15 @@
     state: started
     enabled: true
 
+- name: Указываем Docker использовать journald в качестве драйвера логирования
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "journald"
+      }
+    mode: '0644'
+  notify: restart docker
   
 - name: Проверяем версию Docker
   ansible.builtin.command: docker --version
