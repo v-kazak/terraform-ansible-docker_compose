@@ -8,6 +8,7 @@
   loop:
     - "/home/{{ user_name }}/monitoring/prometheus"
     - "/home/{{ user_name }}/monitoring/grafana/provisioning/dashboards/"
+    - "/home/{{ user_name }}/monitoring/grafana/provisioning/datasources/"
 
 
 - name: копируем Template файлы для мониторинга
