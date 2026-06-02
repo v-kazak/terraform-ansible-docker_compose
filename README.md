@@ -1,6 +1,6 @@
 # Terraform + Ansible + Docker для Yandex Cloud
 
-Проект разворачивает в Yandex Cloud готовый стенд из нескольких web-нод и отдельного monitoring-хоста. Terraform поднимает инфраструктуру и генерирует Ansible inventory, Ansible настраивает серверы и устанавливает Docker, а затем запускает контейнеры приложения и мониторинга через Docker Compose v2.
+Проект разворачивает в Yandex Cloud готовый стенд из нескольких web-нод и отдельного monitoring-хоста. Terraform поднимает инфраструктуру и генерирует Ansible inventory, Ansible настраивает серверы и устанавливает Docker, а затем запускает контейнеры приложения, мониторинга и логирования (ELK) через Docker Compose v2.
 
 После деплоя вы получаете:
 
@@ -10,6 +10,7 @@
 - тестовое web-приложение на `nginx`, которое показывает имя ноды, обработавшей запрос;
 - `node-exporter` на web-нодах и на monitoring-хосте;
 - `Prometheus` и `Grafana` на отдельном monitoring-хосте;
+- стек `ELK` (`Elasticsearch`, `Logstash`, `Kibana` и `Filebeat`) на отдельном monitoring-хосте;
 - автоматически сгенерированный `ansible/inventory.ini`.
 
 ## Архитектура
@@ -28,6 +29,10 @@ monitoring-server
    +--> Prometheus
    +--> Grafana
    +--> node-exporter
+   +--> Elasticsearch
+   +--> Logstash
+   +--> Kibana
+   +--> Filebeat
 ```
 
 Что происходит при развертывании:
@@ -39,6 +44,7 @@ monitoring-server
 5. На web-нодах запускаются `nginx` и `node-exporter`.
 6. На monitoring-хосте запускаются `Prometheus`, `Grafana` и `node-exporter`.
 7. `Prometheus` собирает метрики с monitoring-хоста и всех web-нод по внутренним адресам.
+8. На monitoring-хосте запускается `ELK`-стек. При запуске Ansible автоматически генерирует `Service Account Token` для Kibana, формирует `.env` файл конфигурации и поднимает сервисы. `Filebeat` собирает логи Docker-контейнеров и системные логи, передавая их в `Logstash` и далее в `Elasticsearch`.
 
 ## Что создаёт проект
 
@@ -47,7 +53,7 @@ monitoring-server
 - `terraform/main.tf`
   Создаёт web-ВМ, VPC, подсеть, target group, балансировщик и Ansible inventory.
 - `terraform/monitoring.tf`
-  Создаёт отдельную monitoring-ВМ и security group для неё.
+  Создаёт отдельную monitoring-ВМ и security groups (с открытыми портами для SSH, Grafana, Kibana).
 - `terraform/local.tf`
   Описывает набор публично доступных портов для web-нод.
 - `terraform/outputs.tf`
@@ -56,7 +62,7 @@ monitoring-server
 ### Ansible
 
 - `ansible/playbook.yml`
-  Общий сценарий подготовки всех хостов и раздельного деплоя web и monitoring ролей.
+  Общий сценарий подготовки всех хостов и раздельного деплоя ролей.
 - `ansible/roles/install_docker`
   Устанавливает Docker Engine, Compose plugin и зависимости.
 - `ansible/roles/create_user`
@@ -65,6 +71,8 @@ monitoring-server
   Кладут шаблон страницы, `nginx.conf`, `compose.yml` и запускают web-стек.
 - `ansible/roles/copy_monitoring_files` и `ansible/roles/run_container_monitoring`
   Подготавливают конфиги Prometheus/Grafana и запускают monitoring-стек.
+- `ansible/roles/copy_elk_files` и `ansible/roles/run_container_elk`
+  Копируют конфигурационные файлы ELK-стека, автоматически генерируют токены аутентификации для Kibana и поднимают Docker Compose конфигурацию.
 
 ## Требования
 
@@ -122,7 +130,7 @@ nat                 = true
 - все ВМ прерываемые (`preemptible = true`);
 - для web-нод открыты `22`, `80`, `443`;
 - порт `9100` у web-нод доступен только из внутренней сети;
-- у monitoring-хоста публично доступны `22` и `3000`.
+- у monitoring-хоста публично доступны `22`, `3000` (Grafana) и `5601` (Kibana).
 
 ### 3. Настройка Grafana
 
@@ -135,6 +143,10 @@ GRAFANA_PASSWORD=admin
 ```
 
 Для демонстрации этого достаточно, но для реального использования лучше заранее поменять пароль администратора. Если хотите, чтобы Grafana использовала корректный внешний URL, обновите `SERVER_ROOT_URL` и затем повторно выполните `make ansible`.
+
+### 4. Настройка ELK-стека
+
+По умолчанию Kibana и Elasticsearch используют статический пароль, прописанный в `ansible/roles/run_container_elk/templates/.env.j2`. Для production среды настоятельно рекомендуется его изменить.
 
 ## Запуск
 
@@ -168,7 +180,7 @@ make ansible
 Полезно, если:
 
 - вы поменяли шаблоны или compose-файлы;
-- вы изменили настройки Grafana в `.env`;
+- вы изменили настройки Grafana или ELK;
 - инфраструктура уже создана, и нужно только заново применить конфигурацию.
 
 ## Доступ после деплоя
@@ -211,6 +223,22 @@ http://<monitoring_public_ip>:3000
 
 - значение `GRAFANA_PASSWORD` из `ansible/roles/run_container_monitoring/files/.env`
 
+### Kibana
+
+Интерфейс Kibana доступен на monitoring-хосте:
+
+```text
+http://<monitoring_public_ip>:5601
+```
+
+Логин:
+
+- `elastic`
+
+Пароль по умолчанию (задан в шаблоне `.env.j2`):
+
+- `6R2dcEC95Q`
+
 ### Prometheus
 
 В текущей конфигурации Prometheus не публикуется наружу. Он работает внутри monitoring-стека и используется как источник данных для Grafana.
@@ -245,16 +273,17 @@ make destroy
     ├── playbook.yml
     └── roles
         ├── copy_app_files
+        ├── copy_elk_files
         ├── copy_monitoring_files
         ├── create_user
         ├── install_docker
         ├── run_container_app
+        ├── run_container_elk
         └── run_container_monitoring
 ```
 
 ## Текущие ограничения
 
 - проект ориентирован на демонстрационный стенд и не настраивает HTTPS;
-- пароль Grafana хранится в репозитории в `.env`, поэтому для production нужен другой способ управления секретами;
-- `make start` использует обычный `terraform apply`, то есть потребует ручного подтверждения;
-- логирование и alerting пока не выделены в отдельный стек.
+- пароли Grafana и ELK хранятся в репозитории, поэтому для production нужен другой способ управления секретами;
+- `make start` использует обычный `terraform apply`, то есть потребует ручного подтверждения.
