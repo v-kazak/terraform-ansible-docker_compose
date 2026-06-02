@@ -50,6 +50,10 @@
   debug:
     msg: "Новый токен успешно сгенерирован: {{ kibana_generated_token }}"
 
+- name: Получаем информацию о системных группах Linux
+  ansible.builtin.getent:
+    database: group
+
 - name: Создаем файл .env из шаблона (с подстановкой токена)
   ansible.builtin.template:
     src: .env.j2
