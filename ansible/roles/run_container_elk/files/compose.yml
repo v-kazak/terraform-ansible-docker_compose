@@ -54,6 +54,33 @@ services:
       - elk
     ports:
     - "5601:5601"
+  filebeat:
+    image: elastic/filebeat:8.19.16
+    container_name: filebeat
+    restart: unless-stopped
+    environment:
+      # Берем переменные из .env и отдаем контейнеру под нужными именами
+      - ELASTIC_USERNAME=${USERNAME}
+      - ELASTIC_PASSWORD=${PASSWORD}
+    group_add:
+    # Добавляем группы, которым нужно читать логи. Номера групп берём из .env, туда их кладёт Ansible через сбор артефактов с хоста отдельной таской.
+      - "${HOST_ADM_GID}"
+      - "${HOST_JOURNAL_GID}"
+    volumes:
+      - ./configs/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log/journal:/var/log/journal:ro
+      - /run/log/journal:/run/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /var/log/syslog:/var/log/syslog:ro
+      - /var/log/auth.log:/var/log/auth.log:ro
+    command: filebeat -e --strict.perms=false
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk
+    security_opt:
+      - no-new-privileges:true
+
 
 volumes:
   elasticsearch_data:
