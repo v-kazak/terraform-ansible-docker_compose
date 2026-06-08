@@ -20,6 +20,12 @@
       become: true
       tags: ["Docker"]
 
+    - name: Установка утилиты LazzyDocker для дебага
+      ansible.builtin.import_role:
+        name: install_lazzydocker
+      tags: ["LazzyDocker"]
+      become: true
+
     - name: Создаём пользователя для деплоя и мониторинга, настраиваем SSH
       ansible.builtin.import_role:
         name: create_user

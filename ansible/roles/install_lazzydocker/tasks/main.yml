@@ -1,0 +1,12 @@
+- name: Скачиваем bash-скрипт установки Lazydocker
+  ansible.builtin.get_url:
+    url: "{{ lazzydocker_download_url }}"
+    dest: /tmp/install_lazydocker.sh
+    mode: '0755'
+
+- name: Выполняем скрипт установки
+  ansible.builtin.shell: /tmp/install_lazydocker.sh
+  environment:
+    DIR: "/usr/local/bin" # Явно указываем скрипту, куда положить бинарник
+  args:
+    creates: /usr/local/bin/lazydocker # Ansible пропустит шаг, если программа уже установлена
