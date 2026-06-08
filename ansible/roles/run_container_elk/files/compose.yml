@@ -9,7 +9,7 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+      ES_JAVA_OPTS: "-Xmx1024m -Xms1024m"
       ELASTIC_USERNAME: "${USERNAME}"
       ELASTIC_PASSWORD: "${PASSWORD}"
       discovery.type: single-node
@@ -58,6 +58,7 @@ services:
     image: elastic/filebeat:8.19.16
     container_name: filebeat
     restart: unless-stopped
+    #user: root
     environment:
       # Берем переменные из .env и отдаем контейнеру под нужными именами
       - ELASTIC_USERNAME=${USERNAME}
