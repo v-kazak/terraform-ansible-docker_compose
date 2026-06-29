@@ -21,8 +21,8 @@
    v
 Yandex Network Load Balancer :80
    |
-   +--> web-0 (nginx + node-exporter)
-   +--> web-1 (nginx + node-exporter)
+   +--> web-0 (nginx + node-exporter + filebeat)
+   +--> web-1 (nginx + node-exporter + filebeat)
    +--> ...
 
 monitoring-server
@@ -41,7 +41,7 @@ monitoring-server
 2. Terraform формирует `ansible/inventory.ini` с внешними и внутренними IP-адресами.
 3. Ansible ждёт доступности SSH, устанавливает Docker Engine и `docker compose` plugin.
 4. Ansible создаёт пользователей `deploy` и `monitoring`, добавляет SSH-ключ и отключает вход по паролю.
-5. На web-нодах запускаются `nginx` и `node-exporter`.
+5. На web-нодах запускаются `nginx`, `node-exporter` и `filebeat`.
 6. На monitoring-хосте запускаются `Prometheus`, `Grafana` и `node-exporter`.
 7. `Prometheus` собирает метрики с monitoring-хоста и всех web-нод по внутренним адресам.
 8. На monitoring-хосте запускается `ELK`-стек. При запуске Ansible автоматически генерирует `Service Account Token` для Kibana, формирует `.env` файл конфигурации и поднимает сервисы. `Filebeat` собирает логи Docker-контейнеров и системные логи, передавая их в `Logstash` и далее в `Elasticsearch`.
@@ -73,6 +73,8 @@ monitoring-server
   Подготавливают конфиги Prometheus/Grafana и запускают monitoring-стек.
 - `ansible/roles/copy_elk_files` и `ansible/roles/run_container_elk`
   Копируют конфигурационные файлы ELK-стека, автоматически генерируют токены аутентификации для Kibana и поднимают Docker Compose конфигурацию.
+- `run_container_filebit_on_data_nodes`
+  Копирует конфиги `filebit` и запускает его в Docker compose на web-нодах
 
 ## Требования
 
@@ -129,7 +131,7 @@ nat                 = true
 - web-ноды создаются в количестве `2`;
 - все ВМ прерываемые (`preemptible = true`);
 - для web-нод открыты `22`, `80`, `443`;
-- порт `9100` у web-нод доступен только из внутренней сети;
+- порты `9100` `9200` у web-нод доступен только из внутренней сети;
 - у monitoring-хоста публично доступны `22`, `3000` (Grafana) и `5601` (Kibana).
 
 ### 3. Настройка Grafana
@@ -279,11 +281,12 @@ make destroy
         ├── install_docker
         ├── run_container_app
         ├── run_container_elk
+        ├── run_container_filebit_on_data_nodes
         └── run_container_monitoring
+
 ```
 
 ## Текущие ограничения
 
 - проект ориентирован на демонстрационный стенд и не настраивает HTTPS;
 - пароли Grafana и ELK хранятся в репозитории, поэтому для production нужен другой способ управления секретами;
-- `make start` использует обычный `terraform apply`, то есть потребует ручного подтверждения.
