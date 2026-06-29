@@ -145,10 +145,19 @@ resource "yandex_vpc_security_group" "sg1" {
   }
   ingress {
     protocol       = "TCP"
-    description    = "Allow Prometheus scraping from internal network"
+    description    = "Node exporter"
     port           = 9100
     v4_cidr_blocks = ["10.10.0.0/24"]
   }
+
+    ingress {
+    protocol       = "TCP"
+    description    = "Filebit"
+    port           = 9200
+    v4_cidr_blocks = ["10.10.0.0/24"]
+  }
+
+
   egress {
     protocol       = "ANY"
     v4_cidr_blocks = ["0.0.0.0/0"]

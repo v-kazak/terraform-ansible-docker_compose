@@ -11,7 +11,7 @@
   ansible.builtin.getent:
     database: group
 
-- name: Копируем compose.yml и .env
+- name: Копируем .env для запуска генерации токена
   ansible.builtin.copy:
     src: "{{ item.src }}"
     dest: "/home/{{ user_name }}/elk/{{ item.dest }}"
@@ -19,8 +19,18 @@
     group: "{{ user_name }}"
     mode: '0644'
   loop:
-       - { src: 'compose.yml', dest: 'compose.yml' }
        - { src: '.env', dest: '.env' }
+
+- name: Копируем compose.yml с подстановкой IP адресов data nodes
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/home/{{ user_name }}/elk/{{ item.dest }}"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: '0644'
+  loop:
+       - { src: 'compose.yml.j2', dest: 'compose.yml' }
+
     
 - name: Запускаем только Elasticsearch для генерации токена
   community.docker.docker_compose_v2:

@@ -1,0 +1,36 @@
+- name: создаем директорию для файлабита
+  ansible.builtin.file:
+    path: '/home/{{ user_name }}/filebit'
+    state: directory
+    owner: '{{ user_name }}'
+    group: '{{ user_name }}'
+    mode: '0755'
+
+- name: Получаем информацию о системных группах Linux
+  ansible.builtin.getent:
+    database: group
+
+- name: копируем compose.yml
+  ansible.builtin.copy:
+    src: 'compose.yml'
+    dest: '/home/{{ user_name }}/filebit/compose.yml'
+    owner: '{{ user_name }}'
+    group: '{{ user_name }}'
+    mode: '0644'
+  
+- name: копируем template файлы
+  ansible.builtin.template:
+    src: '{{ item.src }}'
+    dest: '/home/{{ user_name }}/filebit/{{ item.dest }}'
+    owner: '{{ user_name }}'
+    group: '{{ user_name }}'
+    mode: '0644'
+  loop:
+    - { src: 'filebeat.yml.j2', dest: 'filebeat.yml' }
+    - { src: '.env.j2', dest: '.env' }
+
+- name: Запускаем контейнер с помощью docker-compose
+  community.docker.docker_compose_v2:
+    project_src: /home/{{ user_name }}/filebit
+    state: present
+    pull: missing

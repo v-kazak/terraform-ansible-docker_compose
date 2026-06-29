@@ -48,6 +48,12 @@
       tags: ["RunContainer"]
       become: true
 
+    - name: Запускам filebit для импорта логов
+      ansible.builtin.import_role:
+        name: run_container_filebit_on_data_nodes
+      tags: ["RunContainerFilebit"]
+      become: true
+
 
 
 - hosts: monitoring

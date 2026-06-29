@@ -1,0 +1,13 @@
+filebeat.inputs:
+  # Читаем абсолютно всё из системного журнала (включая систему и докер)
+  - type: journald
+    id: all-logs
+
+
+output.elasticsearch:
+  hosts: ["http://{{ hostvars['monitoring-server']['internal_ip'] }}:9200"]
+  username: "${ELASTIC_USERNAME}"
+  password: "${ELASTIC_PASSWORD}"
+
+setup.kibana:
+  host: "http://{{ hostvars['monitoring-server']['internal_ip'] }}:5601"

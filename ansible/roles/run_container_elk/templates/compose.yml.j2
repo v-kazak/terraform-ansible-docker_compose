@@ -6,6 +6,9 @@ services:
     volumes:
       - ./configs/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      # Подставляем внутренний IP севера монитринга динамически из инвентаря
+      - "{{ hostvars['monitoring-server']['internal_ip'] }}:9200:9200"
     security_opt:
       - no-new-privileges:true
     environment:
