@@ -7,14 +7,21 @@
     group: "{{ user_name }}"
     mode: '0755'
 
-- name: Копируем compose.yml
+- name: Получаем информацию о системных группах Linux
+  ansible.builtin.getent:
+    database: group
+
+- name: Копируем compose.yml и .env
   ansible.builtin.copy:
-    src: compose.yml
-    dest: "/home/{{ user_name }}/elk/compose.yml"
+    src: "{{ item.src }}"
+    dest: "/home/{{ user_name }}/elk/{{ item.dest }}"
     owner: "{{ user_name }}"
     group: "{{ user_name }}"
     mode: '0644'
-
+  loop:
+       - { src: 'compose.yml', dest: 'compose.yml' }
+       - { src: '.env', dest: '.env' }
+    
 - name: Запускаем только Elasticsearch для генерации токена
   community.docker.docker_compose_v2:
     project_src: "/home/{{ user_name }}/elk"
@@ -50,13 +57,9 @@
   debug:
     msg: "Новый токен успешно сгенерирован: {{ kibana_generated_token }}"
 
-- name: Получаем информацию о системных группах Linux
-  ansible.builtin.getent:
-    database: group
-
 - name: Создаем файл .env из шаблона (с подстановкой токена)
   ansible.builtin.template:
-    src: .env.j2
+    src: templates/.env.j2
     dest: "/home/{{ user_name }}/elk/.env"
     owner: "{{ user_name }}"
     group: "{{ user_name }}"
